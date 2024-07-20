@@ -249,7 +249,7 @@ impl pallet_sudo::Config for Runtime {
 impl pallet_db::Config for Runtime {
 	type RuntimeEvent = RuntimeEvent;
 	type MaxUserCount = frame_support::pallet_prelude::ConstU32<1000>;
-	type MaxUserData = frame_support::pallet_prelude::ConstU32<5>;
+	type MaxUserData = frame_support::pallet_prelude::ConstU32<2>;
 }
 
 // Create the runtime by composing the FRAME pallets that were previously configured.

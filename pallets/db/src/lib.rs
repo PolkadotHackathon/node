@@ -46,14 +46,39 @@ pub mod pallet {
 	}
 
 	/// A list of user clicks and their timestamps.
-	#[allow(type_alias_bounds)]
-	pub type UserClicks<T: Config> = BoundedVec<UserClick, T::MaxUserData>;
+	// #[allow(type_alias_bounds)]
+	// pub type UserClicks<T: Config> = BoundedVec<UserClick, T::MaxUserData>;
+
+	#[derive(Clone, Encode, Decode, PartialEq, RuntimeDebug, TypeInfo, MaxEncodedLen)]
+	#[scale_info(skip_type_params(T))]
+	pub struct UserClicks<T: Config> {
+		/// Clicks (CYCLCIC BUFFER)
+		pub clicks: BoundedVec<UserClick, T::MaxUserData>,
+		/// Position of the next click to be added
+		pub pos: u16,
+	}
+
+	impl<T: Config> UserClicks<T> {
+		pub fn new() -> Self {
+			Self { clicks: BoundedVec::<UserClick, T::MaxUserData>::new(), pos: 0 }
+		}
+
+		pub fn push(&mut self, click: UserClick) {
+			// self.clicks[self.pos as usize] = click;
+			// self.clicks.force_insert(self.pos as usize, click).unwrap();
+			if self.clicks.try_push(click).is_err() {
+				*self.clicks.get_mut(self.pos as usize).unwrap() = click;
+			}
+			self.pos = (self.pos + 1) % T::MaxUserData::get() as u16;
+		}
+	}
 
 	/// /// A mapping from accounts to user
 	/// #[pallet::storage]
 	/// pub(super) type UserMap<T: Config> = StorageMap<_, Twox64Concat, T::AccountId, UserClicks<T>>;
 
 	/// A mapping from user accounts to their user clicks.
+	#[allow(type_alias_bounds)]
 	pub type WebsiteUsers<T: Config> =
 		BoundedBTreeMap<T::AccountId, UserClicks<T>, T::MaxUserCount>;
 
@@ -142,10 +167,8 @@ pub mod pallet {
 
 				// Add click to user data
 				let user_data = website_users.get_mut(&user_id).unwrap();
-				let result = user_data.try_push(UserClick { dom_id, timestamp });
-				ensure!(result.is_ok(), Error::<T>::UserDataOverflow);
-
-				// TODO: Shift clicks left if overflow
+				user_data.push(UserClick { dom_id, timestamp });
+				// ensure!(result.is_ok(), Error::<T>::UserDataOverflow);
 
 				// Insert user in user map
 				WebsiteMap::<T>::insert(website_id, website_users);
