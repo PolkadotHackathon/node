@@ -28,14 +28,6 @@ pub mod pallet {
 	#[pallet::config]
 	pub trait Config: frame_system::Config {
 		type RuntimeEvent: From<Event<Self>> + IsType<<Self as frame_system::Config>::RuntimeEvent>;
-
-		/// The maximum number of users that can be stored in the pallet.
-		#[pallet::constant]
-		type MaxUserCount: Get<u32>;
-
-		/// The maximum number of user data items that can be stored in the pallet.
-		#[pallet::constant]
-		type MaxUserData: Get<u32>;
 	}
 
 	// TODO: Make contain real good stuff
@@ -46,13 +38,13 @@ pub mod pallet {
 	}
 
 	#[allow(type_alias_bounds)]
-	pub type UserClicks<T: Config> = BoundedVec<UserClick, T::MaxUserData>;
+	pub type UserClicks = [UserClick; 1000];
 
 	#[allow(type_alias_bounds)]
-	pub type WebsiteUsers<T: Config> = BoundedVec<T::AccountId, T::MaxUserCount>;
-
+	pub type WebsiteUsers<T: Config> = [T::AccountId; 5];
+	
 	#[pallet::storage]
-	pub(super) type UserMap<T: Config> = StorageMap<_, Twox64Concat, T::AccountId, UserClicks<T>>;
+	pub(super) type UserMap<T: Config> = StorageMap<_, Twox64Concat, T::AccountId, UserClicks>;
 
 	#[pallet::storage]
 	pub(super) type WebsiteMap<T: Config> = StorageMap<_, Twox64Concat, u64, WebsiteUsers<T>>;
@@ -70,6 +62,7 @@ pub mod pallet {
 	#[pallet::event]
 	#[pallet::generate_deposit(pub(super) fn deposit_event)]
 	pub enum Event<T: Config> {
+		WebsiteRegistered(u64),
 		UserAdded(T::AccountId),
 		UserRemoved(T::AccountId),
 		UserUpdated(T::AccountId),
@@ -84,7 +77,9 @@ pub mod pallet {
 
 			ensure!(!WebsiteMap::<T>::contains_key(&website_id), Error::<T>::WebsiteAlreadyRegistered);
 
-			WebsiteMap::<T>::insert(website_id, WebsiteUsers::<T>::new());
+			WebsiteMap::<T>::insert(&website_id, WebsiteUsers::<T>::new());
+
+			Self::deposit_event(Event::WebsiteRegistered(website_id));
 
 			Ok(())
 		}
