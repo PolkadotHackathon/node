@@ -2,6 +2,8 @@
 
 pub use pallet::*;
 
+type DomIdType = [u32; 16];
+
 #[frame_support::pallet]
 pub mod pallet {
 	use super::*;
@@ -41,7 +43,7 @@ pub mod pallet {
 	// TODO: Make contain real good stuff
 	#[derive(Clone, Encode, Decode, PartialEq, Copy, RuntimeDebug, TypeInfo, MaxEncodedLen)]
 	pub struct UserClick {
-		pub dom_id: u64,
+		pub dom_id: DomIdType,
 		pub timestamp: u64,
 	}
 
@@ -75,7 +77,8 @@ pub mod pallet {
 
 	/// /// A mapping from accounts to user
 	/// #[pallet::storage]
-	/// pub(super) type UserMap<T: Config> = StorageMap<_, Twox64Concat, T::AccountId, UserClicks<T>>;
+	/// pub(super) type UserMap<T: Config> = StorageMap<_, Twox64Concat, T::AccountId,
+	/// UserClicks<T>>;
 
 	/// A mapping from user accounts to their user clicks.
 	#[allow(type_alias_bounds)]
@@ -118,15 +121,6 @@ pub mod pallet {
 			WebsiteMap::<T>::insert(website_id, WebsiteUsers::<T>::new());
 
 			Ok(())
-
-			// // TEST:
-			// let mut test_vec = WebsiteUsers::<T>::new();
-			// test_vec.try_push(_sender.clone()).unwrap();
-			// test_vec.try_push(_sender.clone()).unwrap();
-			//
-			// WebsiteMap::<T>::insert(123, test_vec);
-			//
-			// Ok(())
 		}
 
 		#[pallet::weight(0)]
@@ -134,12 +128,10 @@ pub mod pallet {
 			origin: OriginFor<T>,
 			website_id: u64,
 			user_id: T::AccountId,
-			dom_id: u64,
+			dom_id: DomIdType,
 			timestamp: u64,
 		) -> DispatchResult {
 			let sender = ensure_signed(origin)?;
-
-			// UserMap::<T>::insert(&sender, data);
 
 			// TODO:
 			// 0. Check if website is registered
