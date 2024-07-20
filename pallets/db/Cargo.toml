@@ -23,12 +23,7 @@ frame-system = { git = "https://github.com/paritytech/polkadot-sdk.git", tag = "
 
 [features]
 default = ["std"]
-std = [
-  "frame-support/std",
-  "frame-system/std",
-  "codec/std",
-  "scale-info/std",
-]
+std = ["frame-support/std", "frame-system/std", "codec/std", "scale-info/std"]
 runtime-benchmarks = [
 	"frame-benchmarking/runtime-benchmarks",
 	"frame-support/runtime-benchmarks",
