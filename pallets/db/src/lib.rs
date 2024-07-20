@@ -105,9 +105,12 @@ pub mod pallet {
 
 			if let Some(mut website_users) = website_users {
 				if !website_users.contains(&user_id) {
-					// Register users
 					let result = website_users.try_push(user_id.clone());
+					// Register users on website
 					ensure!(result.is_ok(), Error::<T>::UserAlreadyRegistered);
+
+					// Register user in user map
+					UserMap::<T>::insert(&user_id, UserClicks::<T>::new());
 
 					Self::deposit_event(Event::UserAdded(user_id.clone()));
 				}
