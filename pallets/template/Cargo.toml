@@ -33,8 +33,10 @@ sp-core = { git = "https://github.com/paritytech/polkadot-sdk.git", tag = "polka
 sp-io = { git = "https://github.com/paritytech/polkadot-sdk.git", tag = "polkadot-v1.9.0" }
 sp-runtime = { git = "https://github.com/paritytech/polkadot-sdk.git", tag = "polkadot-v1.9.0" }
 
+criterion = { version = "0.4", features = ["html_reports"] }
+
 [features]
-default = ["std"]
+default = ["std", "runtime-benchmarks"]
 std = [
 	"codec/std",
 	"frame-benchmarking?/std",
