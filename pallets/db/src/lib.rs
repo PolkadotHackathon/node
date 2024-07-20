@@ -59,6 +59,7 @@ pub mod pallet {
 
 	#[pallet::error]
 	pub enum Error<T> {
+		WebsiteAlreadyRegistered,
 		WebsiteNotRegistered,
 		WebsiteIncorrectlyRegistered,
 		UserAlreadyRegistered,
@@ -76,6 +77,18 @@ pub mod pallet {
 
 	#[pallet::call]
 	impl<T: Config> Pallet<T> {
+
+		#[pallet::weight(0)]
+		pub fn register_website(origin: OriginFor<T>, website_id: u64) -> DispatchResult {
+			let _sender = ensure_signed(origin)?;
+
+			ensure!(!WebsiteMap::<T>::contains_key(&website_id), Error::<T>::WebsiteAlreadyRegistered);
+
+			WebsiteMap::<T>::insert(website_id, WebsiteUsers::<T>::new());
+
+			Ok(())
+		}
+
 		#[pallet::weight(0)]
 		pub fn update_click(
 			origin: OriginFor<T>,
@@ -85,8 +98,6 @@ pub mod pallet {
 			timestamp: u64,
 		) -> DispatchResult {
 			let sender = ensure_signed(origin)?;
-
-			let data = UserClick { dom_id, timestamp };
 
 			// UserMap::<T>::insert(&sender, data);
 
@@ -100,7 +111,7 @@ pub mod pallet {
 			ensure!(WebsiteMap::<T>::contains_key(&dom_id), Error::<T>::WebsiteNotRegistered);
 
 			// INFO: 1.
-			let mut website_users = WebsiteMap::<T>::get(&website_id);
+			let website_users = WebsiteMap::<T>::get(&website_id);
 			ensure!(website_users.is_some(), Error::<T>::WebsiteIncorrectlyRegistered);
 
 			if let Some(mut website_users) = website_users {
