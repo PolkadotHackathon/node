@@ -45,19 +45,21 @@ pub mod pallet {
 		pub timestamp: u64,
 	}
 
+	/// A list of user clicks and their timestamps.
 	#[allow(type_alias_bounds)]
 	pub type UserClicks<T: Config> = BoundedVec<UserClick, T::MaxUserData>;
 
-	#[allow(type_alias_bounds)]
-	pub type WebsiteUsers<T: Config> = BoundedVec<T::AccountId, T::MaxUserCount>;
+	/// /// A mapping from accounts to user
+	/// #[pallet::storage]
+	/// pub(super) type UserMap<T: Config> = StorageMap<_, Twox64Concat, T::AccountId, UserClicks<T>>;
 
-	#[pallet::storage]
-	pub(super) type UserMap<T: Config> =
-		StorageMap<_, Twox64Concat, T::AccountId, UserClicks<T>, ValueQuery>;
+	/// A mapping from user accounts to their user clicks.
+	pub type WebsiteUsers<T: Config> =
+		BoundedBTreeMap<T::AccountId, UserClicks<T>, T::MaxUserCount>;
 
+	/// A mapping from websites to their users.
 	#[pallet::storage]
-	pub(super) type WebsiteMap<T: Config> =
-		StorageMap<_, Twox64Concat, u64, WebsiteUsers<T>, ValueQuery>;
+	pub(super) type WebsiteMap<T: Config> = StorageMap<_, Twox64Concat, u64, WebsiteUsers<T>>;
 
 	#[pallet::error]
 	pub enum Error<T> {
@@ -121,43 +123,33 @@ pub mod pallet {
 			// 3. Shift clicks left if overflow
 
 			// INFO: 0.
-			ensure!(WebsiteMap::<T>::contains_key(&dom_id), Error::<T>::WebsiteNotRegistered);
+			ensure!(WebsiteMap::<T>::contains_key(&website_id), Error::<T>::WebsiteNotRegistered);
 
 			// INFO: 1.
-			// let website_users = WebsiteMap::<T>::get(&website_id);
+			let website_users = WebsiteMap::<T>::get(&website_id);
+			ensure!(website_users.is_some(), Error::<T>::WebsiteIncorrectlyRegistered);
 
-			// TEST:
-			WebsiteMap::<T>::insert(123, WebsiteUsers::<T>::new());
+			if let Some(mut website_users) = website_users {
+				if !website_users.contains_key(&user_id) {
+					let result = website_users.try_insert(user_id.clone(), UserClicks::<T>::new());
+					// Register users on website
+					ensure!(result.is_ok(), Error::<T>::UserAlreadyRegistered);
+					Self::deposit_event(Event::UserAdded(user_id.clone()));
+				}
 
-			// ensure!(website_users.is_some(), Error::<T>::WebsiteIncorrectlyRegistered);
-			//
-			// if let Some(mut website_users) = website_users {
-			// 	if !website_users.contains(&user_id) {
-			// 		let result = website_users.try_push(user_id.clone());
-			// 		// Register users on website
-			// 		ensure!(result.is_ok(), Error::<T>::UserAlreadyRegistered);
-			//
-			// 		// Register user in user map
-			// 		UserMap::<T>::insert(&user_id, UserClicks::<T>::new());
-			//
-			// 		Self::deposit_event(Event::UserAdded(user_id.clone()));
-			// 	}
-			//
-			// 	// Add click to user data
-			// 	let user_data = UserMap::<T>::get(user_id.clone());
-			// 	ensure!(user_data.is_some(), Error::<T>::UserNotRegistered);
-			//
-			// 	if let Some(mut user_data) = user_data {
-			// 		let result = user_data.try_push(UserClick { dom_id, timestamp });
-			// 		ensure!(result.is_ok(), Error::<T>::UserDataOverflow);
-			//
-			// 		// TODO: Shift clicks left if overflow
-			//
-			// 		UserMap::<T>::insert(&user_id.clone(), user_data);
-			// 	}
-			// } else {
-			// 	unreachable!();
-			// }
+				// Sanity check
+				ensure!(website_users.contains_key(&user_id), Error::<T>::UserNotRegistered);
+
+				// Add click to user data
+				let user_data = website_users.get_mut(&user_id).unwrap();
+				let result = user_data.try_push(UserClick { dom_id, timestamp });
+				ensure!(result.is_ok(), Error::<T>::UserDataOverflow);
+
+				// TODO: Shift clicks left if overflow
+
+				// Insert user in user map
+				WebsiteMap::<T>::insert(website_id, website_users);
+			}
 
 			Self::deposit_event(Event::UserUpdated(sender));
 			Ok(())
