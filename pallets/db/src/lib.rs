@@ -6,12 +6,16 @@ extern crate alloc;
 use alloc::vec;
 use alloc::vec::Vec;
 
-type HashedID = [u32; 16];
+type HashedID = [i32; 16];
 
 #[frame_support::pallet]
 pub mod pallet {
 	use super::*;
 	use frame_support::pallet_prelude::*;
+	use frame_support::pallet_prelude::*;
+	use frame_support::traits::Currency;
+	use frame_support::traits::Randomness;
+	use frame_system::pallet_prelude::*;
 	use frame_system::pallet_prelude::*;
 
 	// trait BoundedVecContains {
@@ -28,14 +32,17 @@ pub mod pallet {
 	// 	}
 	// }
 
-	use frame_support::traits::Currency;
-
 	#[pallet::pallet]
 	pub struct Pallet<T>(_);
 
 	#[pallet::config]
 	pub trait Config: frame_system::Config {
 		type RuntimeEvent: From<Event<Self>> + IsType<<Self as frame_system::Config>::RuntimeEvent>;
+
+		// type MyRandomness: Randomness<Self::Hash, BlockNumberFor<Self>>;
+
+		/// The type for block numbers.
+		type BlockNumber: Member + Parameter + Default + Copy + MaxEncodedLen;
 
 		/// The maximum number of users that can be stored in the pallet.
 		#[pallet::constant]
@@ -53,6 +60,14 @@ pub mod pallet {
 
 		type Currency: Currency<Self::AccountId>;
 	}
+
+	// impl<T: Config> Pallet<T> {
+	// 	pub fn get_and_increment_nonce() -> Vec<u8> {
+	// 		let nonce = T::Nonce::get();
+	// 		T::Nonce::put(nonce.wrapping_add(1));
+	// 		nonce.encode()
+	// 	}
+	// }
 
 	// TODO: Make contain real good stuff
 	#[derive(Clone, Encode, Decode, PartialEq, Copy, RuntimeDebug, TypeInfo, MaxEncodedLen)]

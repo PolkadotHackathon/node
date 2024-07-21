@@ -112,7 +112,7 @@ pub const VERSION: RuntimeVersion = RuntimeVersion {
 /// up by `pallet_aura` to implement `fn slot_duration()`.
 ///
 /// Change this to adjust the block time.
-pub const MILLISECS_PER_BLOCK: u64 = 6000;
+pub const MILLISECS_PER_BLOCK: u64 = 10;
 
 // NOTE: Currently it is not possible to change the slot duration after the chain has started.
 //       Attempting to do so will brick block production.
@@ -248,8 +248,9 @@ impl pallet_sudo::Config for Runtime {
 /// Configure the pallet-db in pallets/db.
 impl pallet_db::Config for Runtime {
 	type RuntimeEvent = RuntimeEvent;
+	type BlockNumber = BlockNumber;
 	type MaxUserCount = frame_support::pallet_prelude::ConstU32<1000>;
-	type MaxUserData = frame_support::pallet_prelude::ConstU32<2>;
+	type MaxUserData = frame_support::pallet_prelude::ConstU32<100>;
 	type GlobalKey = frame_support::pallet_prelude::ConstU32<123>;
 	type InitialBalance = frame_support::pallet_prelude::ConstU32<1000>;
 	type Currency = Balances;
