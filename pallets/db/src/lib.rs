@@ -82,7 +82,7 @@ pub mod pallet {
 
 	/// A mapping from websites to their users.
 	#[pallet::storage]
-	pub(super) type WebsiteMap<T: Config> = StorageMap<_, Twox64Concat, HashedID, WebsiteUsers<T>>;
+	pub(super) type WebsiteMap<T: Config> = StorageMap<_, Twox64Concat, u128, WebsiteUsers<T>>;
 
 	#[pallet::error]
 	pub enum Error<T> {
@@ -106,7 +106,8 @@ pub mod pallet {
 	#[pallet::call]
 	impl<T: Config> Pallet<T> {
 		#[pallet::weight((Weight::from_parts(0, 0), Pays::No))]
-		pub fn register_website(origin: OriginFor<T>, website_id: HashedID) -> DispatchResult {
+		pub fn register_website(origin: OriginFor<T>, website_id: u128) -> DispatchResult {
+
 			ensure!(
 				!WebsiteMap::<T>::contains_key(&website_id),
 				Error::<T>::WebsiteAlreadyRegistered
@@ -120,7 +121,7 @@ pub mod pallet {
 		#[pallet::weight((Weight::from_parts(0, 0), Pays::No))]
 		pub fn update_click(
 			origin: OriginFor<T>,
-			website_id: HashedID,
+			website_id: u128,
 			user_id: T::AccountId,
 			dom_id: HashedID,
 			timestamp: u64,
