@@ -14,11 +14,10 @@ pub mod pallet {
 	use frame_support::pallet_prelude::*;
 	use frame_support::pallet_prelude::*;
 	use frame_support::traits::Currency;
+	use frame_support::traits::Currency;
 	use frame_support::traits::Randomness;
 	use frame_system::pallet_prelude::*;
 	use frame_system::pallet_prelude::*;
-
-	use frame_support::traits::Currency;
 
 	#[pallet::pallet]
 	pub struct Pallet<T>(_);
