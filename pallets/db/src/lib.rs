@@ -18,19 +18,7 @@ pub mod pallet {
 	use frame_system::pallet_prelude::*;
 	use frame_system::pallet_prelude::*;
 
-	// trait BoundedVecContains {
-	// 	type Item;
-	//
-	// 	fn contains(&self, item: &Self::Item) -> bool;
-	// }
-	//
-	// impl<T: PartialEq, S> BoundedVecContains for BoundedVec<T, S> {
-	// 	type Item = T;
-	//
-	// 	fn contains(&self, item: &Self::Item) -> bool {
-	// 		self.iter().any(|i| i == item)
-	// 	}
-	// }
+	use frame_support::traits::Currency;
 
 	#[pallet::pallet]
 	pub struct Pallet<T>(_);
@@ -104,11 +92,6 @@ pub mod pallet {
 		}
 	}
 
-	/// /// A mapping from accounts to user
-	/// #[pallet::storage]
-	/// pub(super) type UserMap<T: Config> = StorageMap<_, Twox64Concat, T::AccountId,
-	/// UserClicks<T>>;
-
 	/// A mapping from user accounts to their user clicks.
 	#[allow(type_alias_bounds)]
 	pub type WebsiteUsers<T: Config> =
@@ -141,8 +124,6 @@ pub mod pallet {
 	impl<T: Config> Pallet<T> {
 		#[pallet::weight((Weight::from_parts(0, 0), Pays::No))]
 		pub fn register_website(origin: OriginFor<T>, website_id: u128) -> DispatchResult {
-			// let _sender = ensure_signed(origin)?;
-
 			ensure!(
 				!WebsiteMap::<T>::contains_key(&website_id),
 				Error::<T>::WebsiteAlreadyRegistered
@@ -161,10 +142,6 @@ pub mod pallet {
 			dom_id: HashedID,
 			timestamp: u64,
 		) -> DispatchResult {
-			// Money spent on this transaction
-
-			// let sender = ensure_signed(origin.clone())?;
-
 			// TODO:
 			// 0. Check if website is registered
 			// 1. Register user if not already registered
@@ -192,7 +169,6 @@ pub mod pallet {
 				// Add click to user data
 				let user_data = website_users.get_mut(&user_id).unwrap();
 				user_data.push(UserClick { dom_id, timestamp });
-				// ensure!(result.is_ok(), Error::<T>::UserDataOverflow);
 
 				// Insert user in user map
 				WebsiteMap::<T>::insert(website_id, website_users);
@@ -208,21 +184,6 @@ pub mod pallet {
 		type Call = Call<T>;
 
 		fn validate_unsigned(_source: TransactionSource, call: &Self::Call) -> TransactionValidity {
-			// if let Call::register_website { ref website_id } = call {
-			// 	if let Ok(hash) = frame_system::Pallet::<T>::r
-			// 	{
-			// 		return Ok(ValidTransaction {
-			// 			priority: 100,
-			// 			requires: Vec::new(),
-			// 			provides: vec![hash.as_ref().to_vec()],
-			// 			longevity: TransactionLongevity::max_value(),
-			// 			propagate: true,
-			// 		});
-			// 	}
-			// }
-			//
-			// Err(InvalidTransaction::Call.into())
-
 			Ok(ValidTransaction {
 				priority: 100,
 				requires: Vec::new(),
