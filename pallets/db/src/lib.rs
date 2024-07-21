@@ -2,7 +2,11 @@
 
 pub use pallet::*;
 
-type DomIdType = [u32; 16];
+extern crate alloc;
+use alloc::vec;
+use alloc::vec::Vec;
+
+type HashedID = [u32; 16];
 
 #[frame_support::pallet]
 pub mod pallet {
@@ -24,6 +28,8 @@ pub mod pallet {
 	// 	}
 	// }
 
+	use frame_support::traits::Currency;
+
 	#[pallet::pallet]
 	pub struct Pallet<T>(_);
 
@@ -38,12 +44,20 @@ pub mod pallet {
 		/// The maximum number of user data items that can be stored in the pallet.
 		#[pallet::constant]
 		type MaxUserData: Get<u32>;
+
+		#[pallet::constant]
+		type GlobalKey: Get<u32>;
+
+		#[pallet::constant]
+		type InitialBalance: Get<u32>;
+
+		type Currency: Currency<Self::AccountId>;
 	}
 
 	// TODO: Make contain real good stuff
 	#[derive(Clone, Encode, Decode, PartialEq, Copy, RuntimeDebug, TypeInfo, MaxEncodedLen)]
 	pub struct UserClick {
-		pub dom_id: DomIdType,
+		pub dom_id: HashedID,
 		pub timestamp: u64,
 	}
 
@@ -87,7 +101,7 @@ pub mod pallet {
 
 	/// A mapping from websites to their users.
 	#[pallet::storage]
-	pub(super) type WebsiteMap<T: Config> = StorageMap<_, Twox64Concat, u64, WebsiteUsers<T>>;
+	pub(super) type WebsiteMap<T: Config> = StorageMap<_, Twox64Concat, HashedID, WebsiteUsers<T>>;
 
 	#[pallet::error]
 	pub enum Error<T> {
@@ -97,6 +111,7 @@ pub mod pallet {
 		UserAlreadyRegistered,
 		UserNotRegistered,
 		UserDataOverflow,
+		InsufficientBalance,
 	}
 
 	#[pallet::event]
@@ -109,9 +124,9 @@ pub mod pallet {
 
 	#[pallet::call]
 	impl<T: Config> Pallet<T> {
-		#[pallet::weight(0)]
-		pub fn register_website(origin: OriginFor<T>, website_id: u64) -> DispatchResult {
-			let _sender = ensure_signed(origin)?;
+		#[pallet::weight((Weight::from_parts(0, 0), Pays::No))]
+		pub fn register_website(origin: OriginFor<T>, website_id: HashedID) -> DispatchResult {
+			// let _sender = ensure_signed(origin)?;
 
 			ensure!(
 				!WebsiteMap::<T>::contains_key(&website_id),
@@ -123,15 +138,17 @@ pub mod pallet {
 			Ok(())
 		}
 
-		#[pallet::weight(0)]
+		#[pallet::weight((Weight::from_parts(0, 0), Pays::No))]
 		pub fn update_click(
 			origin: OriginFor<T>,
-			website_id: u64,
+			website_id: HashedID,
 			user_id: T::AccountId,
-			dom_id: DomIdType,
+			dom_id: HashedID,
 			timestamp: u64,
 		) -> DispatchResult {
-			let sender = ensure_signed(origin)?;
+			// Money spent on this transaction
+
+			// let sender = ensure_signed(origin.clone())?;
 
 			// TODO:
 			// 0. Check if website is registered
@@ -166,8 +183,38 @@ pub mod pallet {
 				WebsiteMap::<T>::insert(website_id, website_users);
 			}
 
-			Self::deposit_event(Event::UserUpdated(sender));
+			Self::deposit_event(Event::UserUpdated(user_id));
 			Ok(())
+		}
+	}
+
+	#[pallet::validate_unsigned]
+	impl<T: Config> ValidateUnsigned for Pallet<T> {
+		type Call = Call<T>;
+
+		fn validate_unsigned(_source: TransactionSource, call: &Self::Call) -> TransactionValidity {
+			// if let Call::register_website { ref website_id } = call {
+			// 	if let Ok(hash) = frame_system::Pallet::<T>::r
+			// 	{
+			// 		return Ok(ValidTransaction {
+			// 			priority: 100,
+			// 			requires: Vec::new(),
+			// 			provides: vec![hash.as_ref().to_vec()],
+			// 			longevity: TransactionLongevity::max_value(),
+			// 			propagate: true,
+			// 		});
+			// 	}
+			// }
+			//
+			// Err(InvalidTransaction::Call.into())
+
+			Ok(ValidTransaction {
+				priority: 100,
+				requires: Vec::new(),
+				provides: vec![T::GlobalKey::get().to_be_bytes().to_vec()],
+				longevity: TransactionLongevity::max_value(),
+				propagate: true,
+			})
 		}
 	}
 }

@@ -250,6 +250,9 @@ impl pallet_db::Config for Runtime {
 	type RuntimeEvent = RuntimeEvent;
 	type MaxUserCount = frame_support::pallet_prelude::ConstU32<1000>;
 	type MaxUserData = frame_support::pallet_prelude::ConstU32<2>;
+	type GlobalKey = frame_support::pallet_prelude::ConstU32<123>;
+	type InitialBalance = frame_support::pallet_prelude::ConstU32<1000>;
+	type Currency = Balances;
 }
 
 // Create the runtime by composing the FRAME pallets that were previously configured.
